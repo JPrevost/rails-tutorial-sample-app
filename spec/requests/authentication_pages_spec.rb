@@ -40,6 +40,10 @@ describe "Authentication" do
 			describe "followed by signout" do
 				before { click_link "Sign out" }
 				it { should have_link('Sign in') }
+				it { should_not have_link('Profile', href: user_path(user)) }
+				it { should_not have_link('Settings', href: edit_user_path(user)) }
+				it { should_not have_link('Sign out', href: signout_path) }
+				it { should_not have_link('Users', href: users_path) }
 			end
 		end
 	
@@ -61,6 +65,14 @@ describe "Authentication" do
 				describe "after signing in" do
 					it "should render the desired protected page" do
 						page.should have_selector('title', text: 'Edit user')
+					end
+					
+					describe "when signing in again" do
+						before { sign_in(user) }
+						
+						it "should render the default (profile) page" do
+							page.should have_selector('title', text: user.name)
+						end
 					end
 				end
 			end
@@ -111,6 +123,21 @@ describe "Authentication" do
 			end
 		end
 		
+	end
+	
+	describe "signed-in users have no reason to access the new and create actions" do
+		let(:user) { FactoryGirl.create(:user) }
+		before { sign_in user }
+		
+		describe "accessing the new page" do
+			before { get signup_path }
+			specify { response.should redirect_to(root_path) }
+		end
+		
+		describe "accessing the create action" do
+			before { post users_path(user) }
+			specify { response.should redirect_to(root_path) }
+		end
 	end
 
 end
